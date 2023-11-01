@@ -92,3 +92,106 @@ INNER JOIN Artists A ON M.ArtistId = A.id;
 SELECT * FROM MusicInfo;
 
 DROP TABLE Categories;
+--===============SubTask 1.1=======================--
+CREATE PROCEDURE usp_CreateMusic (
+    @Name NVARCHAR(50),
+    @Duration DECIMAL,
+    @ArtistId INT,
+    @CategoryId INT
+)
+AS
+BEGIN 
+    INSERT INTO Musics (Name, Duration, ArtistId, CategoryId)
+    VALUES (@Name, @Duration, @ArtistId, @CategoryId);
+END
+
+EXEC usp_CreateMusic @Name = 'After Dark', @Duration = 4.30, @ArtistId = 1, @CategoryId = 2;
+
+--===============SubTask 1.1=======================--
+--===============================================--
+--===============================================--
+--===============SubTask 1.2=======================--
+
+CREATE PROCEDURE usp_CreateUser (
+    @Name NVARCHAR(50),
+    @Surname NVARCHAR(50),
+    @Username NVARCHAR(50),
+    @Password NVARCHAR(20) NULL,
+    @Gender NVARCHAR(10) NULL
+)
+AS
+BEGIN 
+    INSERT INTO Users (Name, SurName, Username, Password, Gender)
+    VALUES (@Name, @SurName, @Username, @Password, @Gender);
+END
+
+EXEC usp_CreateUser @Name = 'Adil', @Surname = 'Mellimov', @Username = 'Backend Enthuasist', @Password = 'birthdaynumber', @Gender = 'Male';
+
+--===============SubTask 1.2=======================--
+--===============================================--
+--===============================================--
+--===============SubTask 1.3=======================--
+
+CREATE PROCEDURE usp_CreateCategory (
+    @Name NVARCHAR(50)
+)
+AS
+BEGIN 
+    INSERT INTO Categories (Name)
+    VALUES (@Name);
+END
+
+EXEC usp_CreateCategory @Name = 'Heavy Metal';
+
+--===============SubTask 1.3=======================--
+--===============================================--
+--===============================================--
+--===============SubTask 2=======================--
+ALTER TABLE Musics
+ADD IsDeleted bit DEFAULT (0) NOT NULL;
+
+
+Select * From Musics;
+Drop table Musics;
+
+
+--============ TRIGGER=========--
+CREATE TRIGGER trg_MusicDeletion
+ON Musics
+INSTEAD OF DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @DeletedMusicId INT;
+    SELECT @DeletedMusicId = id FROM DELETED;
+
+    IF (SELECT IsDeleted FROM Musics WHERE id = @DeletedMusicId) = 0
+    BEGIN
+        UPDATE Musics
+        SET IsDeleted = 1
+        WHERE id = @DeletedMusicId;
+        
+        IF (SELECT IsDeleted FROM Musics WHERE id = @DeletedMusicId) = 1
+        BEGIN
+            DELETE FROM Musics WHERE id = @DeletedMusicId;
+        END
+    END
+END;
+
+--===============SubTask 2=======================--
+
+CREATE PROCEDURE NumberOfArtistsUserListeningTo (
+    @UserId INT
+)
+AS
+BEGIN
+    SELECT COUNT(A.id) AS [Listened Artists]
+    FROM Users U
+    INNER JOIN Playlists P ON U.id = P.UserId
+    INNER JOIN Musics M ON P.MusicId = M.id
+    INNER JOIN Artists A ON M.ArtistId = A.id
+    WHERE U.id = @UserId;
+END;
+
+EXEC NumberOfArtistsUserListeningTo @UserId = 1;
